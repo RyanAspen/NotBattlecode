@@ -1,0 +1,5 @@
+For maintaining bot info, use a dict() with robot ID as the key.
+
+Robot order is recorded as a list. New robots are added to the front of the list.
+
+The map is maintained with a series of 2D numpy arrays. 
