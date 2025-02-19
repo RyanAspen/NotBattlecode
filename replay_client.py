@@ -11,7 +11,7 @@ class ReplayClient:
     def __init__(self):
         def load():
             # Open a file in replays
-            f = askopenfile(mode = 'r', filetypes=[('Replay Files', '*txt')])
+            f = askopenfile(mode = 'r', filetypes=[('Replay Files', '*rpy')])
             if f is not None:
                 lines = f.readlines()
                 self.map_size = tuple(map(int,lines[0].split(',')))
@@ -53,7 +53,6 @@ class ReplayClient:
 
                 """
                 self.round = 1
-                self.rounds_per_second = 0
                 x_scale = self.map_size[1] / (CLIENT_SIZE[1] - EDITOR_TAB_SIZE[1])
                 y_scale = self.map_size[0] / CLIENT_SIZE[0]
                 self.scale = 1/max(x_scale, y_scale)
@@ -153,6 +152,12 @@ class ReplayClient:
         self.step_backward_button = Button(self.tab,text="Step Backward",command=step_backward)
         self.step_backward_button.pack()
 
+
+        self.round_string = StringVar()
+        self.round_string.set("Round 1")
+        self.round_label = Label(self.tab, textvariable=self.round_string)
+        self.round_label.pack()
+
         self.scale = None
         self.x_start = None
         self.y_start = None
@@ -174,10 +179,12 @@ class ReplayClient:
         if not self.paused and self.rps > 0:
             if self.round < self.total_rounds:
                 self.round += 1
+            self.round_string.set("Round " + str(self.round))
             self.canvas.after(int(1000 / self.rps), self.progress_round)
         elif not self.paused and self.rps < 0:
             if self.round > 1:
                 self.round -= 1
+            self.round_string.set("Round " + str(self.round))
             self.canvas.after(int(1000 / -self.rps), self.progress_round)
         else:
             self.canvas.after(1, self.progress_round)

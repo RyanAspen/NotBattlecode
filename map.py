@@ -12,16 +12,16 @@ MAX_GAME_LENGTH = 2000
 # Maintains location information
 class Map:
 
-    def __init__(self, map_name, red_mod, blue_mod):
+    def __init__(self, map_name, red_mod, blue_mod, red_name, blue_name):
         self.red_mod = red_mod
         self.blue_mod = blue_mod
-        self.replay_name_file = "replays\\" + map_name + ".txt"
+        self.replay_name_file = "replays\\" + map_name + "_" + red_name + "vs" + blue_name + ".rpy"
         
         self.bots = {}
         self.bot_order = []
         self.round = 1        
 
-        with open("maps\\" + map_name, "r") as f:
+        with open("maps\\" + map_name + ".map", "r") as f:
             lines = f.readlines()
             if lines[2].strip() not in ('HORIZONTAL', 'VERTICAL', 'ROTATIONAL'):
                 print("Invalid Symmetry = ", lines[1])

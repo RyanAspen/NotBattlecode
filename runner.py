@@ -5,7 +5,7 @@ import sys
 
 RED_TEAM_CODE = "first"
 BLUE_TEAM_CODE = "nothing"
-MAP_NAME = "test3.txt"
+MAP_NAME = "test3"
 
 red_code_file_name = "competition/" + RED_TEAM_CODE + "/robot.py"
 blue_code_file_name = "competition/" + BLUE_TEAM_CODE + "/robot.py"
@@ -29,6 +29,6 @@ blue_spec.loader.exec_module(blue_mod)
 
 
 
-m = Map(MAP_NAME, red_mod, blue_mod)
+m = Map(MAP_NAME, red_mod, blue_mod, RED_TEAM_CODE, BLUE_TEAM_CODE)
 
 m.run()

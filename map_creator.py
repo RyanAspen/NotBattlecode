@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter.ttk import Combobox
 from tkinter.filedialog import askopenfile, asksaveasfile
 import numpy as np
+import os
 
 CLIENT_SIZE = (600,800)
 EDITOR_TAB_SIZE = (600,200)
@@ -52,7 +53,7 @@ class MapCreator:
                 self.f.close()
                 self.f = None
 
-            self.f = askopenfile(mode = 'r+', filetypes=[('Map Files', '*txt')])
+            self.f = askopenfile(mode = 'r+', filetypes=[('Map Files', '*map')])
             if self.f is not None:
                 lines = self.f.readlines()
                 if lines[2].strip() not in ('HORIZONTAL', 'VERTICAL', 'ROTATIONAL'):
@@ -148,11 +149,11 @@ class MapCreator:
 
         def save():
             if self.f is None:
-                self.f = asksaveasfile(mode = 'w', filetypes=[('Map Files', '*txt')])
+                self.f = asksaveasfile(mode = 'w', filetypes=[('Map Files', '*map')], defaultextension='map')
                 if self.f is not None:
-                    self.f.write(self.f.name + "\n")
-                    self.f.write(self.symmetry_string_var.get() + "\n")
+                    self.f.write(os.path.basename(self.f.name) + "\n")
                     self.f.write(str(self.map_size[0]) + " " + str(self.map_size[1]) + "\n")
+                    self.f.write(self.symmetry_string_var.get() + "\n")
                     for row in self.terrain_map:
                         for t in row:
                             if not t:
@@ -172,7 +173,7 @@ class MapCreator:
                 self.f.truncate(0)
                 self.f.close()
                 self.f = open(self.f.name, 'r+')
-                self.f.write(self.f.name + "\n")
+                self.f.write(os.path.basename(self.f.name) + "\n")
                 self.f.write(str(self.map_size[0]) + " " + str(self.map_size[1]) + "\n")
                 self.f.write(self.symmetry_string_var.get() + "\n")
                 for row in self.terrain_map:
