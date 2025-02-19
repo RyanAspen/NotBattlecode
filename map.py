@@ -17,28 +17,49 @@ class Map:
         self.blue_mod = blue_mod
         self.replay_name_file = "replays\\" + map_name + ".txt"
         
+        self.bots = {}
+        self.bot_order = []
+        self.round = 1        
+
         with open("maps\\" + map_name, "r") as f:
             lines = f.readlines()
-            self.map_size = tuple(map(int,lines[0].split()))
-            
+            if lines[2].strip() not in ('HORIZONTAL', 'VERTICAL', 'ROTATIONAL'):
+                print("Invalid Symmetry = ", lines[1])
+                return
+            self.map_name = lines[0]
+            self.map_size = tuple(map(int,lines[1].split()))
+            self.symmetry = lines[2].strip()
             self.terrain_map = np.ones(self.map_size, dtype=bool)
-            self.bot_map = np.zeros(self.map_size, dtype=int) 
             self.resource_map = np.zeros(self.map_size, dtype=int)
-            self.bots = {}
-            self.bot_order = []
-            self.round = 1
+            self.bot_map = np.zeros(self.map_size, dtype=int)
+            for y in range(self.map_size[0]):
+                line = lines[3+y]
+                x = 0
+                for t in line.split(',')[:-1]:
+                    if t == 'x':
+                        self.terrain_map[y][x] = False
+                    x += 1
+            for y in range(self.map_size[0]):
+                line = lines[self.map_size[0]+3+y]
+                x = 0
+                for r in line.split(',')[:-1]:
+                    self.resource_map[y][x] = int(r)
+                    x += 1
             self.r = 0
             self.b = 0
+            for line in lines[self.map_size[0]*2+3:]:
+                
+                x,y = tuple(map(int,line.split()))
+                print(x,y)
+                self.spawn_bot(Location(x,y),BotType("Basic"),Team(True))
+                if self.symmetry == "ROTATIONAL":
+                    self.spawn_bot(Location(self.map_size[1]-x-1,self.map_size[0]-y-1),BotType("Basic"),Team(False))
+                elif self.symmetry == "VERTICAL":
+                    self.spawn_bot(Location(x,self.map_size[0]-y-1),BotType("Basic"),Team(False))
+                else:
+                    self.spawn_bot(Location(self.map_size[1]-x-1,y),BotType("Basic"),Team(False))
+            print(self.bot_order)
 
-            for y in range(self.map_size[1]):
-                line = lines[1+y]
-                for x in range(self.map_size[0]):
-                    if line[x] == '-':
-                        continue
-                    elif line[x] == 'r':
-                        self.spawn_bot(Location(x,y), BotType("Basic"), Team(True))
-                    elif line[x] == 'b':
-                        self.spawn_bot(Location(x,y), BotType("Basic"), Team(False))
         if os.path.exists(self.replay_name_file):
             os.remove(self.replay_name_file)
         with open(self.replay_name_file, "x") as f:
@@ -53,7 +74,7 @@ class Map:
     def run(self):
         while not self.run_one_round():
             pass
-        round_data = RoundData(self.bots, self.resource_map)
+        round_data = RoundData(self.bots, self.terrain_map, self.resource_map)
         with open(self.replay_name_file, "a") as f:
             round_data.add_to_file(f)
         if self.r == 0:
@@ -72,7 +93,7 @@ class Map:
 
     # Return true if the game is done
     def run_one_round(self) -> bool:
-        round_data = RoundData(self.bots, self.resource_map)
+        round_data = RoundData(self.bots, self.terrain_map, self.resource_map)
         with open(self.replay_name_file, "a") as f:
             round_data.add_to_file(f)
         i = 0
@@ -81,8 +102,12 @@ class Map:
             if self.bot_order[i] > -1:
                 self.run_bot(self.bot_order[i])
             i += 1
-        self.bot_order = [b for b in self.bot_order if b > -1]        
+        self.bot_order = [b for b in self.bot_order if b > -1]      
+
+        #print(self.round, self.r, self.b)  
         self.round += 1
+        #print(self.bot_order)
+        
         return self.is_game_done()        
 
     # run() must be implemented for both bot modules
@@ -107,7 +132,7 @@ class Map:
 
 
     def is_on_map(self, location : Location) -> bool:
-        return location.x >= 0 and location.y >= 0 and location.x < self.map_size[0] and location.y < self.map_size[1]
+        return location.x >= 0 and location.y >= 0 and location.x < self.map_size[1] and location.y < self.map_size[0]
 
     # TODO: Add constant
     def can_sense_location(self, curr_loc : Location, sense_loc : Location) -> bool:
@@ -130,6 +155,7 @@ class Map:
 
     def spawn_bot(self, location : Location, bot_type : BotType, team : Team):
         if not self.is_on_map(location):
+            print(location.x, location.y, "Not on map")
             return
         new_bot = Bot(location, bot_type, team)
         if team.team_id == True:
@@ -216,9 +242,9 @@ class Map:
     def get_locations_within_radius(self, loc : Location, radius : int) -> list[Location]:
         locs = []
         x_min = max(0, loc.x-3)
-        x_max = min(self.map_size[0]-1, loc.x+3)
+        x_max = min(self.map_size[1]-1, loc.x+3)
         y_min = max(0, loc.y-3)
-        y_max = min(self.map_size[1]-1, loc.y+3)
+        y_max = min(self.map_size[0]-1, loc.y+3)
         for x in range(x_min,x_max+1):
             for y in range(y_min, y_max+1):
                 new_loc = Location(x,y)

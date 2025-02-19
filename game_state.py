@@ -2,8 +2,9 @@ import numpy as np
 
 class RoundData:
 
-    def __init__(self, bots, resource_map):
+    def __init__(self, bots, terrain_map, resource_map):
         self.bots = bots
+        self.terrain_map = terrain_map
         self.resource_map = resource_map
 
     def add_to_file(self, f):

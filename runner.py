@@ -5,7 +5,7 @@ import sys
 
 RED_TEAM_CODE = "first"
 BLUE_TEAM_CODE = "nothing"
-MAP_NAME = "test"
+MAP_NAME = "test3.txt"
 
 red_code_file_name = "competition/" + RED_TEAM_CODE + "/robot.py"
 blue_code_file_name = "competition/" + BLUE_TEAM_CODE + "/robot.py"

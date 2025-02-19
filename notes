@@ -1,5 +1,16 @@
-For maintaining bot info, use a dict() with robot ID as the key.
-
-Robot order is recorded as a list. New robots are added to the front of the list.
-
-The map is maintained with a series of 2D numpy arrays. 
+Map Files (.map) are formatted as follows:
+MAP_NAME
+SYMMETRY
+MAP_HEIGHT MAP_WIDTH
+(
+    MAP_HEIGHTxMAP_WIDTH sized matrix for terrain data
+    "-" for no terrain, "x" for wall, comma-separated
+)
+(
+    MAP_HEIGHTxMAP_WIDTH sized matrix for resource data
+    # between 0-100 for resources, comma-separated
+)
+(
+    List of positions for the red starting bots. Symmetry can be used to find the blue bots.
+    x y
+)
