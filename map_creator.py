@@ -10,6 +10,9 @@ DEFAULT_MAP_SIZE = (20,20)
 MIN_MAP_SIZE = (20,20)
 MAX_MAP_SIZE = (60,60)
 
+MIN_STARTING_BOTS = 1
+MAX_STARTING_BOTS = 4
+
 class MapCreator:
     def __init__(self):
 
@@ -148,6 +151,10 @@ class MapCreator:
                 self.canvas.pack()
 
         def save():
+            if not is_map_valid():
+                print("Map not valid")
+                return
+
             if self.f is None:
                 self.f = asksaveasfile(mode = 'w', filetypes=[('Map Files', '*map')], defaultextension='map')
                 if self.f is not None:
@@ -189,6 +196,11 @@ class MapCreator:
                     self.f.write("\n")
                 for x,y in self.r_locs:
                     self.f.write(str(x) + " " + str(y) + "\n")
+
+        def is_map_valid():
+            if len(self.r_locs) < MIN_STARTING_BOTS or len(self.r_locs) > MAX_STARTING_BOTS:
+                return False
+            return True
 
 
         def clean_exit():

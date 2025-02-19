@@ -86,6 +86,11 @@ class ReplayClient:
             self.round = 1
             self.paused = True
 
+        def reverse():
+            self.rps = -self.rps
+            self.rps_string.set("x" + str(self.rps))
+            self.paused = True
+
         def step_forward():
             # Pause, then step forward 1 round
             if self.round < self.total_rounds:
@@ -138,6 +143,9 @@ class ReplayClient:
 
         self.slow_down_button = Button(self.tab, text="Slow Down", command=slow_down)
         self.slow_down_button.pack()
+
+        self.reverse_button = Button(self.tab, text="Reverse", command=reverse)
+        self.reverse_button.pack()
 
         self.rps = 1
         self.rps_string = StringVar()
