@@ -78,6 +78,14 @@ class ReplayClient:
                     y += 1
                 self.canvas.pack()
 
+                self.tile_info_display_x = None
+                self.tile_info_display_y = None
+                self.bot_info_display_id = None
+                self.tile_to_highlight_x = None
+                self.tile_to_highlight_y = None
+                self.tile_info_frame.pack_forget()
+                self.bot_info_frame.pack_forget()
+
         def play_pause():
             self.paused = not self.paused
 
@@ -85,6 +93,7 @@ class ReplayClient:
             # Go to round 1 and pause
             self.round = 1
             self.paused = True
+            self.round_string.set("Round " + str(self.round))
 
         def reverse():
             self.rps = -self.rps
@@ -96,12 +105,14 @@ class ReplayClient:
             if self.round < self.total_rounds:
                 self.round += 1
             self.paused = True
+            self.round_string.set("Round " + str(self.round))
 
         def step_backward():
             # Pause, then step backward 1 round
             if self.round > 1:
                 self.round -= 1
             self.paused = True
+            self.round_string.set("Round " + str(self.round))
         
         def speed_up():
             if abs(self.rps) < MAX_RPS:
@@ -160,11 +171,64 @@ class ReplayClient:
         self.step_backward_button = Button(self.tab,text="Step Backward",command=step_backward)
         self.step_backward_button.pack()
 
-
         self.round_string = StringVar()
         self.round_string.set("Round 1")
         self.round_label = Label(self.tab, textvariable=self.round_string)
         self.round_label.pack()
+
+        
+        # Bot info UI
+
+        self.bot_info_display_id = None
+
+        self.bot_info_frame = Frame(self.tab)
+        self.bot_info_frame.pack_forget()
+
+        self.bot_info_id = StringVar()
+        self.bot_info_id_label = Label(self.bot_info_frame, textvariable=self.bot_info_id)
+        self.bot_info_id_label.pack()
+
+        self.bot_info_loc = StringVar()
+        self.bot_info_loc_label = Label(self.bot_info_frame, textvariable=self.bot_info_loc)
+        self.bot_info_loc_label.pack()
+
+        self.bot_info_type = StringVar()
+        self.bot_info_type_label = Label(self.bot_info_frame, textvariable=self.bot_info_type)
+        self.bot_info_type_label.pack()
+
+        self.bot_info_hp = StringVar()
+        self.bot_info_hp_label = Label(self.bot_info_frame, textvariable=self.bot_info_hp)
+        self.bot_info_hp_label.pack()
+
+
+
+
+        # Tile info UI
+
+        self.tile_info_display_x = None
+        self.tile_info_display_y = None
+
+        self.tile_info_frame = Frame(self.tab)
+        self.tile_info_frame.pack_forget()
+
+        self.tile_info_loc = StringVar()
+        self.tile_info_loc_label = Label(self.tile_info_frame, textvariable=self.tile_info_loc)
+        self.tile_info_loc_label.pack()
+
+        self.tile_info_resources = StringVar()
+        self.tile_info_resources_label = Label(self.tile_info_frame, textvariable=self.tile_info_resources)
+        self.tile_info_resources_label.pack()
+
+        self.tile_info_passable = StringVar()
+        self.tile_info_passable_label = Label(self.tile_info_frame, textvariable=self.tile_info_passable)
+        self.tile_info_passable_label.pack()
+
+        self.canvas.bind("<Button-1>", self.left_click_handler)
+        self.tile_to_highlight_x = None
+        self.tile_to_highlight_y = None
+        self.highlight = None
+
+
 
         self.scale = None
         self.x_start = None
@@ -197,13 +261,109 @@ class ReplayClient:
         else:
             self.canvas.after(1, self.progress_round)
 
+    def get_map_coords(self,real_x,real_y):
+        x = int((real_x - self.x_start) / self.scale)
+        y = int((real_y - self.y_start) / self.scale)
+        if x < 0 or x >= self.map_size[1] or y < 0 or y >= self.map_size[0]:
+            return None, None
+        return x,y
+
+    def get_tile_info(self, x, y):
+        resources = self.resources[self.round]
+        return x,y,resources[y][x],self.terrain_map[y][x]
+
+    def get_bot_info_for_id(self, id):
+        bots = self.bots[self.round]
+        for bot in bots:
+            if bot[0] == id:
+                return bot
+        return None
+
+    def get_bot_info_at_loc(self, x, y):
+        bots = self.bots[self.round]
+        for bot in bots:
+            if bot[1] == x and bot[2] == y:
+                return bot
+        return None
+
+    def update_info_display(self):
+        if self.bot_info_display_id is not None:
+            bot = self.get_bot_info_for_id(self.bot_info_display_id)
+            if bot is None:
+                self.bot_info_display_id = None
+                self.bot_info_frame.pack_forget()
+            else:
+                self.tile_to_highlight_x = bot[1]
+                self.tile_to_highlight_y = bot[2]
+                self.bot_info_id.set("Bot ID = " + str(bot[0]))
+                self.bot_info_loc.set("Location = (" + str(bot[1]) + ", " + str(bot[2]) + ")")
+                self.bot_info_type.set("Type = " + bot[3])
+                self.bot_info_hp.set("HP = " + str(bot[4]))
+        elif self.tile_info_display_x is not None and self.tile_info_display_y is not None:
+            tile = self.get_tile_info(self.tile_info_display_x, self.tile_info_display_y)
+            self.tile_to_highlight_x = tile[0]
+            self.tile_to_highlight_y = tile[1]
+            self.tile_info_loc.set("(" + str(tile[0]) + ", " + str(tile[1]) + ")")
+            self.tile_info_resources.set("Resources = " + str(tile[2]))
+            self.tile_info_passable.set("Is Passable? " + str(tile[3]))
+        else:
+            self.tile_to_highlight_x = None
+            self.tile_to_highlight_y = None
+
+    def left_click_handler(self, event):
+        if self.map_size is None:
+            return
+        x,y = self.get_map_coords(event.x, event.y)
+        if x is None or y is None:
+            return
+        bot = self.get_bot_info_at_loc(x,y)
+        if self.tile_info_display_x is not None and self.tile_info_display_x == x and self.tile_info_display_y is not None and self.tile_info_display_y == y:
+            # We are currently displaying tile info at (x,y) already. Instead, stop showing it
+            self.tile_info_display_x = None
+            self.tile_info_display_y = None
+            self.tile_info_frame.pack_forget()
+        elif self.bot_info_display_id is not None and bot is not None and bot[0] == self.bot_info_display_id:
+            # We are currently displaying the bot's info already. Instead, stop showing it
+            self.bot_info_display_id = None
+            self.bot_info_frame.pack_forget()
+        elif bot is not None:
+            # Display info about bot
+            self.bot_info_display_id = bot[0]
+            self.tile_info_display_x = None
+            self.tile_info_display_y = None
+            self.bot_info_frame.pack()
+            self.tile_info_frame.pack_forget()
+        else:
+            # Display info about tile
+            self.tile_info_display_x = x
+            self.tile_info_display_y = y
+            self.bot_info_display_id = None
+            self.tile_info_frame.pack()
+            self.bot_info_frame.pack_forget()
+
     def render(self):
+        self.update_info_display()
         self.canvas.after(int(1000 / RENDER_FPS), self.render)
         if self.map_size is None:
             return
+        
+        if self.highlight is not None:
+            for g in self.highlight:
+                self.canvas.delete(g)
+        if self.tile_to_highlight_x is not None and self.tile_to_highlight_y is not None:
+            h_x,h_y = self.get_real_coords(self.tile_to_highlight_x, self.tile_to_highlight_y)
+            self.highlight = []
+            self.highlight.append(self.canvas.create_line(h_x, h_y, h_x+self.scale, h_y, fill='orange',width=2))
+            self.highlight.append(self.canvas.create_line(h_x, h_y+self.scale, h_x+self.scale, h_y+self.scale, fill='orange',width=2))
+            self.highlight.append(self.canvas.create_line(h_x, h_y, h_x, h_y+self.scale, fill='orange',width=2))
+            self.highlight.append(self.canvas.create_line(h_x+self.scale, h_y, h_x+self.scale, h_y+self.scale, fill='orange',width=2))
+
         if self.round == self.prev_round:
             return
         self.prev_round = self.round
+
+        self.update_info_display()
+
         for g in self.resource_graphics:
             self.canvas.delete(g)
         self.resource_graphics = []
@@ -243,6 +403,8 @@ class ReplayClient:
             else:
                 square = self.canvas.create_rectangle(real_x, real_y, real_x+self.scale,real_y+self.scale,fill='blue')
             self.bot_graphics.append(square)
+
+        
 
     def run(self):
         self.render()
