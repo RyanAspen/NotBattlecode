@@ -3,8 +3,8 @@ import importlib.util
 import os
 import sys
 
-RED_TEAM_CODE = "first"
-BLUE_TEAM_CODE = "nothing"
+RED_TEAM_CODE = "grey_goo"
+BLUE_TEAM_CODE = "grey_goo"
 MAP_NAME = "test3"
 
 red_code_file_name = "competition/" + RED_TEAM_CODE + "/robot.py"

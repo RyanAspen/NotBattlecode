@@ -78,6 +78,7 @@ class Team:
         return Team(not self.team_id)
 
 STARTING_HP = {"Basic" : 10}
+BOT_COST = {"Basic" : 5}
 
 class BotType:
 
@@ -90,6 +91,8 @@ class BotType:
     def get_starting_hp(self) -> int:
         return STARTING_HP[self.type]
     
+    def get_cost(self) -> int:
+        return BOT_COST[self.type]
 
 
 class BotInfo:

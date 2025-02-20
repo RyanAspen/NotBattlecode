@@ -73,3 +73,24 @@ class BotController:
         self.map.move_bot(self.id, loc)
         self.loc = loc
         self.move_cooldown += 10        
+
+    def can_take_resources(self, loc : Location):
+        return self.is_action_ready() and self.map.can_take_resources(self.loc, loc)
+
+    def take_resources(self, loc : Location):
+        if not self.can_take_resources(loc):
+            return
+        self.map.take_resources(self.loc, loc, self.team)
+        self.action_cooldown += 10
+
+    def get_resources(self) -> int:
+        return self.map.get_resources(self.team)
+
+    def can_build_bot(self, loc : Location, type : BotType):
+        return self.is_action_ready() and self.map.can_build_bot(self.loc,loc,type,self.team)
+
+    def build_bot(self, loc : Location, type : BotType):
+        if not self.can_build_bot(loc, type):
+            return
+        self.map.build_bot(self.loc,loc,type,self.team)
+        self.action_cooldown += 10

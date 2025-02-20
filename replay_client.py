@@ -2,6 +2,8 @@ from tkinter import *
 from tkinter.filedialog import askopenfile
 import numpy as np
 
+from utility import BotType
+
 CLIENT_SIZE = (600,800)
 EDITOR_TAB_SIZE = (600,200)
 RENDER_FPS = 128
@@ -396,12 +398,18 @@ class ReplayClient:
         bots = self.bots[self.round]
         for bot in bots:
             x,y = bot[1], bot[2]
+            type = bot[3]
+            # HP Fraction remaining = current / starting_hp
+            s_hp = BotType(type).get_starting_hp()
+            size = int(self.scale * (bot[4] + s_hp)/(2*s_hp))
             team = bot[5]
             real_x,real_y = self.get_real_coords(x,y)
+            r_start_x = real_x + (self.scale - size) / 2
+            r_start_y = real_y + (self.scale - size) / 2
             if team:
-                square = self.canvas.create_rectangle(real_x, real_y, real_x+self.scale,real_y+self.scale,fill='red')
+                square = self.canvas.create_rectangle(r_start_x, r_start_y, r_start_x+size,r_start_y+size,fill='red')
             else:
-                square = self.canvas.create_rectangle(real_x, real_y, real_x+self.scale,real_y+self.scale,fill='blue')
+                square = self.canvas.create_rectangle(r_start_x, r_start_y, r_start_x+size,r_start_y+size,fill='blue')
             self.bot_graphics.append(square)
 
         

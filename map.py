@@ -21,6 +21,9 @@ class Map:
         self.bot_order = []
         self.round = 1        
 
+        self.red_resources = 0
+        self.blue_resources = 0
+
         with open("maps\\" + map_name + ".map", "r") as f:
             lines = f.readlines()
             if lines[2].strip() not in ('HORIZONTAL', 'VERTICAL', 'ROTATIONAL'):
@@ -280,6 +283,43 @@ class Map:
                 bot = self.bots[id]
                 if bot.team == team:
                     bots.append(BotInfo(bot.id, bot.loc, bot.type, bot.hp, bot.team))
-        return bots
+        return bots            
 
-            
+    # TODO: Add constant
+    def can_take_resources(self, curr_loc : Location, sense_loc : Location) -> bool:
+        if curr_loc.distance_squared_to(sense_loc) > 10:
+            return False
+        if not self.is_on_map(sense_loc):
+            return False
+        return True
+    
+    def take_resources(self, curr_loc : Location, sense_loc : Location, team : Team):
+        if not self.can_take_resources(curr_loc, sense_loc):
+            return
+        if self.resource_map[sense_loc.y][sense_loc.x] > 0:
+            self.resource_map[sense_loc.y][sense_loc.x] -= 1
+            if team.team_id:
+                self.red_resources += 1
+            else:
+                self.blue_resources += 1
+
+    def get_resources(self, team : Team) -> int:
+        if team.team_id:
+            return self.red_resources
+        else:
+            return self.blue_resources
+
+    def can_build_bot(self, curr_loc : Location, build_loc : Location, type : BotType, team : Team):
+        if curr_loc.is_adjacent_to(build_loc) and self.is_on_map(build_loc) and self.get_resources(team) >= type.get_cost():
+            if self.terrain_map[build_loc.y][build_loc.x] and self.bot_map[build_loc.y][build_loc.x] == 0:
+                return True
+        return False
+    
+    def build_bot(self, curr_loc : Location, build_loc : Location, type : BotType, team : Team):
+        if not self.can_build_bot(curr_loc, build_loc, type, team):
+            return
+        self.spawn_bot(build_loc,type,team)
+        if team.team_id:
+            self.red_resources -= type.get_cost()
+        else:
+            self.blue_resources -= type.get_cost()
