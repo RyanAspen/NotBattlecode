@@ -8,6 +8,7 @@ from game_state import RoundData
 from utility import BotInfo, BotType, Location, LocationInfo, Team
 
 MAX_GAME_LENGTH = 2000
+PASSIVE_INCOME = 1
 
 # Maintains location information
 class Map:
@@ -53,7 +54,6 @@ class Map:
             for line in lines[self.map_size[0]*2+3:]:
                 
                 x,y = tuple(map(int,line.split()))
-                print(x,y)
                 self.spawn_bot(Location(x,y),BotType("Basic"),Team(True))
                 if self.symmetry == "ROTATIONAL":
                     self.spawn_bot(Location(self.map_size[1]-x-1,self.map_size[0]-y-1),BotType("Basic"),Team(False))
@@ -61,7 +61,6 @@ class Map:
                     self.spawn_bot(Location(x,self.map_size[0]-y-1),BotType("Basic"),Team(False))
                 else:
                     self.spawn_bot(Location(self.map_size[1]-x-1,y),BotType("Basic"),Team(False))
-            print(self.bot_order)
 
         if os.path.exists(self.replay_name_file):
             os.remove(self.replay_name_file)
@@ -96,6 +95,8 @@ class Map:
 
     # Return true if the game is done
     def run_one_round(self) -> bool:
+        self.red_resources += PASSIVE_INCOME
+        self.blue_resources += PASSIVE_INCOME
         round_data = RoundData(self.bots, self.terrain_map, self.resource_map)
         with open(self.replay_name_file, "a") as f:
             round_data.add_to_file(f)

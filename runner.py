@@ -4,7 +4,7 @@ import os
 import sys
 
 RED_TEAM_CODE = "grey_goo"
-BLUE_TEAM_CODE = "grey_goo"
+BLUE_TEAM_CODE = "first"
 MAP_NAME = "test3"
 
 red_code_file_name = "competition/" + RED_TEAM_CODE + "/robot.py"

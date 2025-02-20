@@ -19,18 +19,18 @@ def run(bc : BotController):
     for dir in dirs:
         if bc.can_build_bot(bc.get_location().add(dir), BotType("Basic")):
             bc.build_bot(bc.get_location().add(dir), BotType("Basic"))
-            return
+            break
 
     bots = bc.sense_bots_in_range(bc.get_team().get_opponent())
     for bot in bots:
         if bc.can_attack(bot.loc):
             bc.attack(bot.loc)
-            return
+            break
         
     for dir in dirs:
         if bc.can_take_resources(bc.get_location().add(dir)):
             bc.take_resources(bc.get_location().add(dir))
-            return
+            break
         
     dir = random.choice(dirs)
     if bc.can_move(dir):
