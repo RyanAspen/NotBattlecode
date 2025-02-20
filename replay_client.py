@@ -401,16 +401,26 @@ class ReplayClient:
             type = bot[3]
             # HP Fraction remaining = current / starting_hp
             s_hp = BotType(type).get_starting_hp()
-            size = int(self.scale * (bot[4] + s_hp)/(2*s_hp))
+            if type == "Base":
+                size = int(self.scale * (bot[4] + s_hp)/(2*s_hp))
+            else:
+                size = int(0.5*self.scale * (bot[4] + s_hp)/(2*s_hp))
             team = bot[5]
             real_x,real_y = self.get_real_coords(x,y)
             r_start_x = real_x + (self.scale - size) / 2
             r_start_y = real_y + (self.scale - size) / 2
-            if team:
-                square = self.canvas.create_rectangle(r_start_x, r_start_y, r_start_x+size,r_start_y+size,fill='red')
-            else:
-                square = self.canvas.create_rectangle(r_start_x, r_start_y, r_start_x+size,r_start_y+size,fill='blue')
-            self.bot_graphics.append(square)
+            b_g = None
+            if type == "Base":
+                if team:
+                    b_g = self.canvas.create_rectangle(r_start_x, r_start_y, r_start_x+size,r_start_y+size,fill='red')
+                else:
+                    b_g = self.canvas.create_rectangle(r_start_x, r_start_y, r_start_x+size,r_start_y+size,fill='blue')
+            elif type == "Basic":
+                if team:
+                    b_g = self.canvas.create_rectangle(r_start_x, r_start_y, r_start_x+size,r_start_y+size,fill='red')
+                else:
+                    b_g = self.canvas.create_rectangle(r_start_x, r_start_y, r_start_x+size,r_start_y+size,fill='blue')
+            self.bot_graphics.append(b_g)
 
         
 

@@ -44,28 +44,25 @@ class BotController:
         return self.map.is_on_map(loc)
 
     def can_sense_bot_at_location(self, loc : Location) -> bool:
-        return self.map.can_sense_bot_at_location(loc)
+        return self.map.can_sense_bot_at_location(loc, self.type)
 
     def sense_bot_at_location(self, loc : Location) -> BotInfo:
-        return self.map.sense_bot_at_location(loc)
-
-    def sense_bots_in_range(self, r : int = -1) -> list[BotInfo]:
-        return self.map.sense_bots(self.loc, self.id, r)
+        return self.map.sense_bot_at_location(loc, self.type)
     
     def sense_bots_in_range(self, team : Team, r : int = -1) -> list[BotInfo]:
-        return self.map.sense_bots(self.loc, self.id,team, r)
+        return self.map.sense_bots(self.loc, self.id,self.type, team, r)
     
     def can_attack(self, loc : Location) -> bool:
-        return self.is_action_ready() and self.map.can_attack(self.loc, loc)
+        return self.is_action_ready() and self.map.can_attack(self.loc, loc, self.type)
     
     def attack(self, loc : Location):
         if not self.can_attack(loc):
             return
-        if self.map.attack(self.loc, loc):
-            self.action_cooldown += 10
+        if self.map.attack(self.loc, loc, self.type):
+            self.action_cooldown += self.type.get_attack_cooldown()
 
     def can_move(self, dir : Direction) -> bool:
-        return self.is_movement_ready() and self.map.can_move(self.loc, self.loc.add(dir))
+        return self.type.can_move() and self.is_movement_ready() and self.map.can_move(self.loc, self.loc.add(dir))
 
     def move(self, dir : Direction):
         if not self.can_move(dir):
@@ -73,28 +70,27 @@ class BotController:
         loc = self.loc.add(dir)
         self.map.move_bot(self.id, loc)
         self.loc = loc
-        self.move_cooldown += 10        
+        self.move_cooldown += self.type.get_move_cooldown()        
 
     def can_take_resources(self, loc : Location):
-        return self.is_action_ready() and self.map.can_take_resources(self.loc, loc)
+        return self.is_action_ready() and self.map.can_take_resources(self.loc, loc, self.type)
 
     def take_resources(self, loc : Location):
         if not self.can_take_resources(loc):
             return
-        self.map.take_resources(self.loc, loc, self.team)
-        self.action_cooldown += 10
+        self.map.take_resources(self.loc, loc, self.team, self.type)
+        self.action_cooldown += self.type.get_gather_cooldown()
 
     def get_team_resources(self) -> int:
         return self.map.get_team_resources(self.team)
 
     def can_build_bot(self, loc : Location, type : BotType):
-        return self.is_action_ready() and self.map.can_build_bot(self.loc,loc,type,self.team)
+        return self.type.can_build() and self.map.can_build_bot(self.loc,loc,type,self.team,self.type)
 
     def build_bot(self, loc : Location, type : BotType):
         if not self.can_build_bot(loc, type):
             return
-        self.map.build_bot(self.loc,loc,type,self.team)
-        self.action_cooldown += 10
+        self.map.build_bot(self.loc,loc,type,self.team,self.type)
 
     def can_read_comms(self, i : int) -> bool:
         return self.map.can_read_comms(i)
@@ -109,4 +105,4 @@ class BotController:
         self.map.write_comms(i, val, self.team)
 
     def get_resources(self, r : int = -1) -> list[ResourceInfo]:
-        return self.map.get_resources(self.loc, r)
+        return self.map.get_resources(self.loc, self.type, r)

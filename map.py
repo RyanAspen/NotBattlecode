@@ -1,3 +1,4 @@
+import math
 import random
 import numpy as np
 
@@ -57,13 +58,13 @@ class Map:
             for line in lines[self.map_size[0]*2+3:]:
                 
                 x,y = tuple(map(int,line.split()))
-                self.spawn_bot(Location(x,y),BotType("Basic"),Team(True))
+                self.spawn_bot(Location(x,y),BotType("Base"),Team(True))
                 if self.symmetry == "ROTATIONAL":
-                    self.spawn_bot(Location(self.map_size[1]-x-1,self.map_size[0]-y-1),BotType("Basic"),Team(False))
+                    self.spawn_bot(Location(self.map_size[1]-x-1,self.map_size[0]-y-1),BotType("Base"),Team(False))
                 elif self.symmetry == "VERTICAL":
-                    self.spawn_bot(Location(x,self.map_size[0]-y-1),BotType("Basic"),Team(False))
+                    self.spawn_bot(Location(x,self.map_size[0]-y-1),BotType("Base"),Team(False))
                 else:
-                    self.spawn_bot(Location(self.map_size[1]-x-1,y),BotType("Basic"),Team(False))
+                    self.spawn_bot(Location(self.map_size[1]-x-1,y),BotType("Base"),Team(False))
 
         if os.path.exists(self.replay_name_file):
             os.remove(self.replay_name_file)
@@ -83,18 +84,22 @@ class Map:
         with open(self.replay_name_file, "a") as f:
             round_data.add_to_file(f)
         if self.r == 0:
-            print("BLUE WINS BY DESTRUCTION")
+            print("BLUE WINS BY DESTRUCTION at round " + str(self.round))
         elif self.b == 0:
-            print("RED WINS BY DESTRUCTION")
+            print("RED WINS BY DESTRUCTION at round " + str(self.round))
         elif self.r > self.b:
-            print("RED WINS BY MAJORITY")
+            print("RED WINS BY MAJORITY at round " + str(self.round))
         elif self.b > self.r:
-            print("BLUE WINS BY MAJORITY")
+            print("BLUE WINS BY MAJORITY at round " + str(self.round))
+        elif self.red_resources > self.blue_resources:
+            print("RED WINS BY ECONOMY at round " + str(self.round))
+        elif self.blue_resources > self.red_resources:
+            print("BLUE WINS BY ECONOMY at round " + str(self.round))
         else:
             if random.choice([True, False]):
-                print("RED WINS BY TIEBREAKER")
+                print("RED WINS BY TIEBREAKER at round " + str(self.round))
             else:
-                print("BLUE WINS BY TIEBREAKER")
+                print("BLUE WINS BY TIEBREAKER at round " + str(self.round))
 
     # Return true if the game is done
     def run_one_round(self) -> bool:
@@ -142,21 +147,21 @@ class Map:
         return location.x >= 0 and location.y >= 0 and location.x < self.map_size[1] and location.y < self.map_size[0]
 
     # TODO: Add constant
-    def can_sense_location(self, curr_loc : Location, sense_loc : Location) -> bool:
-        if curr_loc.distance_squared_to(sense_loc) > 10:
+    def can_sense_location(self, curr_loc : Location, sense_loc : Location, type : BotType) -> bool:
+        if curr_loc.distance_squared_to(sense_loc) > type.get_vision_range():
             return False
         if not self.is_on_map(sense_loc):
             return False
         return True
 
-    def sense_location(self, curr_loc : Location, sense_loc : Location) -> LocationInfo:
+    def sense_location(self, curr_loc : Location, sense_loc : Location, type : BotType) -> LocationInfo:
         """
             Contains:
                 - The Location (again)
                 - Terrain information
                 - Resource information
         """
-        if not self.can_sense_bot_at_location(curr_loc, sense_loc):
+        if not self.can_sense_bot_at_location(curr_loc, sense_loc, type):
             return None
         return LocationInfo(sense_loc, self.resource_map[sense_loc.y][sense_loc.x], self.terrain_map[sense_loc.y][sense_loc.x])
 
@@ -165,10 +170,11 @@ class Map:
             print(location.x, location.y, "Not on map")
             return
         new_bot = Bot(location, bot_type, team)
-        if team.team_id == True:
-            self.r += 1
-        else:
-            self.b += 1
+        if bot_type == BotType("Base"):
+            if team.team_id == True:
+                self.r += 1
+            else:
+                self.b += 1
         self.bot_map[location.y][location.x] = new_bot.id
         self.bots[new_bot.id] = new_bot
         self.bot_order.append(new_bot.id)
@@ -201,10 +207,11 @@ class Map:
         location = self.bots[bot_id].loc
         self.bot_map[location.y][location.x] = 0
         self.bot_order[self.bot_order.index(bot_id)] = -1
-        if self.bots[bot_id].team.team_id == True:
-            self.r -= 1
-        else:
-            self.b -= 1
+        if self.bots[bot_id].get_type() == BotType("Base"):
+            if self.bots[bot_id].team.team_id == True:
+                self.r -= 1
+            else:
+                self.b -= 1
         del self.bots[bot_id]
 
     # TODO: Add constant
@@ -224,9 +231,8 @@ class Map:
         bot = self.bots[id]
         return BotInfo(bot.id, bot.loc, bot.type, bot.hp, bot.team)
 
-    # TODO: Add constant
-    def can_attack(self, curr_loc : Location, attack_loc : Location) -> bool:
-        if curr_loc.distance_squared_to(attack_loc) > 10:
+    def can_attack(self, curr_loc : Location, attack_loc : Location, type : BotType) -> bool:
+        if curr_loc.distance_squared_to(attack_loc) > type.get_attack_range():
             return False
         if not self.is_on_map(attack_loc):
             return False
@@ -234,13 +240,13 @@ class Map:
     
     # TODO: Add constant
     # Returns true if the attack happens
-    def attack(self, curr_loc : Location, attack_loc : Location) -> bool:
-        if not self.can_attack(curr_loc, attack_loc):
+    def attack(self, curr_loc : Location, attack_loc : Location, type : BotType) -> bool:
+        if not self.can_attack(curr_loc, attack_loc, type):
             return False
         id = self.bot_map[attack_loc.y][attack_loc.x] 
         if id > 0:
             target = self.bots[id]
-            target.hp -= 1
+            target.hp -= type.get_attack_strength()
             if target.hp <= 0:
                 self.despawn_bot(id)
         return True        
@@ -248,10 +254,11 @@ class Map:
     # TODO: Add constant
     def get_locations_within_radius(self, loc : Location, radius : int) -> list[Location]:
         locs = []
-        x_min = max(0, loc.x-3)
-        x_max = min(self.map_size[1]-1, loc.x+3)
-        y_min = max(0, loc.y-3)
-        y_max = min(self.map_size[0]-1, loc.y+3)
+        s_r = int(math.sqrt(radius))
+        x_min = max(0, loc.x-s_r)
+        x_max = min(self.map_size[1]-1, loc.x+s_r)
+        y_min = max(0, loc.y-s_r)
+        y_max = min(self.map_size[0]-1, loc.y+s_r)
         for x in range(x_min,x_max+1):
             for y in range(y_min, y_max+1):
                 new_loc = Location(x,y)
@@ -259,46 +266,30 @@ class Map:
                     locs.append(Location(x,y))
         return locs
 
-    # TODO: Add constant
-    def sense_bots(self, curr_loc : Location, curr_id : int, radius : int = -1) -> list[BotInfo]:
+    def sense_bots(self, curr_loc : Location, curr_id : int, type : BotType, team : Team, radius : int = -1) -> list[BotInfo]:
         bots = []
         if radius == -1:
-            radius = 10
-        if radius < 0 or radius > 10:
+            radius = type.get_vision_range()
+        if radius < 0 or radius > type.get_vision_range():
             return bots
         locs = self.get_locations_within_radius(curr_loc, radius)
         for loc in locs:
             id = self.bot_map[loc.y][loc.x]
             if id > 0 and id != curr_id:
                 bot = self.bots[id]
-                bots.append(BotInfo(bot.id, bot.loc, bot.type, bot.hp, bot.team))
-        return bots
-
-    def sense_bots(self, curr_loc : Location, curr_id : int, team : Team, radius : int = -1) -> list[BotInfo]:
-        bots = []
-        if radius == -1:
-            radius = 10
-        if radius < 0 or radius > 10:
-            return bots
-        locs = self.get_locations_within_radius(curr_loc, radius)
-        for loc in locs:
-            id = self.bot_map[loc.y][loc.x]
-            if id > 0 and id != curr_id:
-                bot = self.bots[id]
-                if bot.team == team:
+                if team == bot.team:
                     bots.append(BotInfo(bot.id, bot.loc, bot.type, bot.hp, bot.team))
-        return bots            
+        return bots         
 
-    # TODO: Add constant
-    def can_take_resources(self, curr_loc : Location, sense_loc : Location) -> bool:
-        if curr_loc.distance_squared_to(sense_loc) > 10:
+    def can_take_resources(self, curr_loc : Location, sense_loc : Location, type : BotType) -> bool:
+        if curr_loc.distance_squared_to(sense_loc) > type.get_gather_range():
             return False
         if not self.is_on_map(sense_loc):
             return False
         return True
     
-    def take_resources(self, curr_loc : Location, sense_loc : Location, team : Team):
-        if not self.can_take_resources(curr_loc, sense_loc):
+    def take_resources(self, curr_loc : Location, sense_loc : Location, team : Team, type : BotType):
+        if not self.can_take_resources(curr_loc, sense_loc, type):
             return
         if self.resource_map[sense_loc.y][sense_loc.x] > 0:
             self.resource_map[sense_loc.y][sense_loc.x] -= 1
@@ -313,14 +304,14 @@ class Map:
         else:
             return self.blue_resources
 
-    def can_build_bot(self, curr_loc : Location, build_loc : Location, type : BotType, team : Team):
-        if curr_loc.is_adjacent_to(build_loc) and self.is_on_map(build_loc) and self.get_team_resources(team) >= type.get_cost():
+    def can_build_bot(self, curr_loc : Location, build_loc : Location, type : BotType, team : Team, myType : BotType):
+        if curr_loc.is_within_distance_squared(build_loc, myType.get_build_range()) and self.is_on_map(build_loc) and self.get_team_resources(team) >= type.get_cost():
             if self.terrain_map[build_loc.y][build_loc.x] and self.bot_map[build_loc.y][build_loc.x] == 0:
                 return True
         return False
     
-    def build_bot(self, curr_loc : Location, build_loc : Location, type : BotType, team : Team):
-        if not self.can_build_bot(curr_loc, build_loc, type, team):
+    def build_bot(self, curr_loc : Location, build_loc : Location, type : BotType, team : Team, myType : BotType):
+        if not self.can_build_bot(curr_loc, build_loc, type, team, myType):
             return
         self.spawn_bot(build_loc,type,team)
         if team.team_id:
@@ -354,11 +345,11 @@ class Map:
         else:
             self.blue_comms[i] = val
 
-    def get_resources(self, curr_loc : Location, r : int = -1) -> list[ResourceInfo]:
+    def get_resources(self, curr_loc : Location, type : BotType, radius : int = -1) -> list[ResourceInfo]:
         resources = []
         if radius == -1:
-            radius = 10
-        if radius < 0 or radius > 10:
+            radius = type.get_vision_range()
+        if radius < 0 or radius > type.get_vision_range():
             return resources
         locs = self.get_locations_within_radius(curr_loc, radius)
         for loc in locs:

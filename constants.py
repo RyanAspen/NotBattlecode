@@ -1,0 +1,13 @@
+STARTING_HP = {"Base" : 50, "Basic" : 10}
+BOT_COST = {"Base" : 10e10, "Basic" : 5}
+ATTACK_RANGE = {"Base" : 16, "Basic" : 9}
+VISION_RANGE = {"Base" : 20, "Basic" : 16}
+BUILD_RANGE = {"Base" : 4, "Basic" : -1}
+GATHER_RANGE = {"Base" : -1, "Basic" : 2}
+ATTACK_COOLDOWN = {"Base" : 20, "Basic" : 20}
+ATTACK_STRENGTH = {"Base" : 2, "Basic" : 1}
+GATHER_COOLDOWN = {"Base" : -1, "Basic" : 10}
+MOVE_COOLDOWN = {"Base" : -1, "Basic" : 20}
+CAN_MOVE = {"Base" : False, "Basic" : True}
+CAN_BUILD = {"Base" : True, "Basic" : False}
+CAN_GATHER = {"Base" : False, "Basic" : True}

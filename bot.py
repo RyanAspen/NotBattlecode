@@ -19,3 +19,6 @@ class Bot:
         s += str(self.hp) + ","
         s += str(self.team.team_id)
         return s
+
+    def get_type(self) -> BotType:
+        return self.type

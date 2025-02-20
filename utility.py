@@ -1,6 +1,9 @@
 from __future__ import annotations
 from enum import Enum
 
+from constants import ATTACK_COOLDOWN, ATTACK_RANGE, ATTACK_STRENGTH, BOT_COST, BUILD_RANGE, CAN_BUILD, CAN_GATHER, CAN_MOVE, GATHER_COOLDOWN, GATHER_RANGE, MOVE_COOLDOWN, STARTING_HP, VISION_RANGE
+
+
 class Direction(Enum):
     NORTH = 1
     NORTHEAST = 2
@@ -29,6 +32,12 @@ class Location:
         self.x = x
         self.y = y
 
+    def __eq__(self, other : Location):
+        return self.x == other.x and self.y == other.y
+    
+    def __str__(self):
+        return "(" + str(self.x) + ", " + str(self.y) + ")"
+
     def distance_squared_to(self, loc : Location) -> int:
         return (self.x-loc.x)**2 + (self.y-loc.y)**2
     
@@ -46,9 +55,9 @@ class Location:
         x_diff = loc.x - self.x
         y_diff = loc.y - self.y
         if x_diff > 0:
-            if y_diff > 0:
+            if y_diff < 0:
                 return Direction.NORTHEAST
-            elif y_diff < 0:
+            elif y_diff > 0:
                 return Direction.SOUTHEAST
             else:
                 return Direction.EAST
@@ -60,9 +69,9 @@ class Location:
             else:
                 return Direction.WEST
         else:
-            if y_diff > 0:
+            if y_diff < 0:
                 return Direction.NORTH
-            elif y_diff < 0:
+            elif y_diff > 0:
                 return Direction.SOUTH
             else:
                 return Direction.CENTER
@@ -77,8 +86,7 @@ class Team:
     def get_opponent(self) -> Team:
         return Team(not self.team_id)
 
-STARTING_HP = {"Basic" : 10}
-BOT_COST = {"Basic" : 5}
+
 
 class BotType:
 
@@ -93,6 +101,39 @@ class BotType:
     
     def get_cost(self) -> int:
         return BOT_COST[self.type]
+    
+    def get_attack_range(self) -> int:
+        return ATTACK_RANGE[self.type]
+    
+    def get_vision_range(self) -> int:
+        return VISION_RANGE[self.type]
+    
+    def get_build_range(self) -> int:
+        return BUILD_RANGE[self.type]
+    
+    def get_gather_range(self) -> int:
+        return GATHER_RANGE[self.type]
+    
+    def get_attack_cooldown(self) -> int:
+        return ATTACK_COOLDOWN[self.type]
+    
+    def get_gather_cooldown(self) -> int:
+        return GATHER_COOLDOWN[self.type]
+    
+    def get_move_cooldown(self) -> int:
+        return MOVE_COOLDOWN[self.type]
+    
+    def can_move(self) -> bool:
+        return CAN_MOVE[self.type]
+    
+    def can_take_resources(self) -> bool:
+        return CAN_GATHER[self.type]
+
+    def can_build(self) -> bool:
+        return CAN_BUILD[self.type]
+    
+    def get_attack_strength(self) -> int:
+        return ATTACK_STRENGTH[self.type]
 
 
 class BotInfo:
@@ -103,11 +144,20 @@ class BotInfo:
         self.hp = hp
         self.team = team
 
+    def get_id(self) -> int:
+        return self.id
+
     def get_team(self) -> Team:
         return self.team
 
+    def get_hp(self) -> int:
+        return self.hp
+
     def get_type(self) -> BotType:
         return self.botType
+    
+    def get_location(self) -> Location:
+        return self.loc
 
 class LocationInfo:
     def __init__(self, loc : Location, resources : int, passable : bool):
@@ -115,8 +165,23 @@ class LocationInfo:
         self.resources = resources
         self.passable = passable
 
+    def get_location(self) -> Location:
+        return self.location
+    
+    def get_resources(self) -> int:
+        return self.resources
+    
+    def is_passable(self) -> bool:
+        return self.passable
+
 class ResourceInfo:
     def __init__(self, loc : Location, resources : int):
         self.location = loc
         self.resources = resources
+
+    def get_location(self) -> Location:
+        return self.location
+    
+    def get_resources(self) -> int:
+        return self.resources
 
