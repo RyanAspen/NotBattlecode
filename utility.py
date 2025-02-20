@@ -115,5 +115,8 @@ class LocationInfo:
         self.resources = resources
         self.passable = passable
 
-    
+class ResourceInfo:
+    def __init__(self, loc : Location, resources : int):
+        self.location = loc
+        self.resources = resources
 

@@ -5,10 +5,11 @@ import os
 
 from bot import Bot
 from game_state import RoundData
-from utility import BotInfo, BotType, Location, LocationInfo, Team
+from utility import BotInfo, BotType, Location, LocationInfo, ResourceInfo, Team
 
 MAX_GAME_LENGTH = 2000
 PASSIVE_INCOME = 1
+NUM_COMM_INTS = 64
 
 # Maintains location information
 class Map:
@@ -24,6 +25,8 @@ class Map:
 
         self.red_resources = 0
         self.blue_resources = 0
+        self.red_comms = np.zeros(NUM_COMM_INTS, dtype=np.uint16)
+        self.blue_comms = np.zeros(NUM_COMM_INTS, dtype=np.uint16)
 
         with open("maps\\" + map_name + ".map", "r") as f:
             lines = f.readlines()
@@ -304,14 +307,14 @@ class Map:
             else:
                 self.blue_resources += 1
 
-    def get_resources(self, team : Team) -> int:
+    def get_team_resources(self, team : Team) -> int:
         if team.team_id:
             return self.red_resources
         else:
             return self.blue_resources
 
     def can_build_bot(self, curr_loc : Location, build_loc : Location, type : BotType, team : Team):
-        if curr_loc.is_adjacent_to(build_loc) and self.is_on_map(build_loc) and self.get_resources(team) >= type.get_cost():
+        if curr_loc.is_adjacent_to(build_loc) and self.is_on_map(build_loc) and self.get_team_resources(team) >= type.get_cost():
             if self.terrain_map[build_loc.y][build_loc.x] and self.bot_map[build_loc.y][build_loc.x] == 0:
                 return True
         return False
@@ -324,3 +327,42 @@ class Map:
             self.red_resources -= type.get_cost()
         else:
             self.blue_resources -= type.get_cost()
+
+    def can_read_comms(self, i : int) -> bool:
+        if i < 0 or i >= NUM_COMM_INTS:
+            return False
+        return True
+    
+    def read_comms(self, i : int, team : Team) -> int:
+        if not self.can_read_comms(i):
+            return None
+        if team.team_id:
+            return self.red_comms[i]
+        else:
+            return self.blue_comms[i]
+        
+    def can_write_comms(self, i : int, val : int) -> bool:
+        if i < 0 or i >= NUM_COMM_INTS or val < 0 or val > 65535:
+            return False
+        return True
+    
+    def write_comms(self, i : int, val : int, team : Team):
+        if not self.can_write_comms(i, val):
+            return
+        if team.team_id:
+            self.red_comms[i] = val
+        else:
+            self.blue_comms[i] = val
+
+    def get_resources(self, curr_loc : Location, r : int = -1) -> list[ResourceInfo]:
+        resources = []
+        if radius == -1:
+            radius = 10
+        if radius < 0 or radius > 10:
+            return resources
+        locs = self.get_locations_within_radius(curr_loc, radius)
+        for loc in locs:
+            r = self.resource_map[loc.y][loc.x]
+            if r > 0:
+                resources.append(ResourceInfo(loc, r))
+        return resources

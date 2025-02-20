@@ -1,5 +1,6 @@
-from utility import Direction, Team, Location, BotType, BotInfo
+from utility import Direction, ResourceInfo, Team, Location, BotType, BotInfo
 from map import Map
+import numpy as np
 
 class BotController:
     def __init__(self, map : Map, id : int):
@@ -83,8 +84,8 @@ class BotController:
         self.map.take_resources(self.loc, loc, self.team)
         self.action_cooldown += 10
 
-    def get_resources(self) -> int:
-        return self.map.get_resources(self.team)
+    def get_team_resources(self) -> int:
+        return self.map.get_team_resources(self.team)
 
     def can_build_bot(self, loc : Location, type : BotType):
         return self.is_action_ready() and self.map.can_build_bot(self.loc,loc,type,self.team)
@@ -94,3 +95,18 @@ class BotController:
             return
         self.map.build_bot(self.loc,loc,type,self.team)
         self.action_cooldown += 10
+
+    def can_read_comms(self, i : int) -> bool:
+        return self.map.can_read_comms(i)
+
+    def read_comms(self, i : int) -> int:
+        return self.read_comms(i)
+
+    def can_write_comms(self, i : int, val : int) -> bool:
+        return self.can_write_comms(i, val)
+
+    def write_comms(self, i : int, val : int):
+        self.map.write_comms(i, val, self.team)
+
+    def get_resources(self, r : int = -1) -> list[ResourceInfo]:
+        return self.map.get_resources(self.loc, r)
