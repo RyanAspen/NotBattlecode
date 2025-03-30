@@ -1,4 +1,4 @@
-from bot_controller import BotController
+from stubs import *
 
-def run(bc : BotController):
+def turn():
     pass

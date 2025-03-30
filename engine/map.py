@@ -5,27 +5,32 @@ import numpy as np
 import os
 
 from bot import Bot
+
+from constants import NUM_COMM_INTS, PASSIVE_INCOME
 from game_state import RoundData
-from utility import BotInfo, BotType, Location, LocationInfo, ResourceInfo, Team
+from utility import BotInfo, BotType, Direction, Location, LocationInfo, ResourceInfo, Team
+from typing import Dict
+
 
 MAX_GAME_LENGTH = 2000
-PASSIVE_INCOME = 1
-NUM_COMM_INTS = 64
+
 
 # Maintains location information
 class Map:
 
-    def __init__(self, map_name, red_mod, blue_mod, red_name, blue_name):
-        self.red_mod = red_mod
-        self.blue_mod = blue_mod
+    def __init__(self, map_name, red_code, blue_code, red_name, blue_name):
+        self.red_code = red_code
+        self.blue_code = blue_code
         self.replay_name_file = "replays\\" + map_name + "_" + red_name + "vs" + blue_name + ".rpy"
         
-        self.bots = {}
+        self.bots : Dict[int, Bot] = {}
         self.bot_order = []
         self.round = 1        
 
         self.red_resources = 0
         self.blue_resources = 0
+        self.red_resigned = False
+        self.blue_resigned = False
         self.red_comms = np.zeros(NUM_COMM_INTS, dtype=np.uint16)
         self.blue_comms = np.zeros(NUM_COMM_INTS, dtype=np.uint16)
 
@@ -83,7 +88,11 @@ class Map:
         round_data = RoundData(self.bots, self.terrain_map, self.resource_map)
         with open(self.replay_name_file, "a") as f:
             round_data.add_to_file(f)
-        if self.r == 0:
+        if self.red_resigned:
+            print("BLUE WINS BY RESIGNATION at round " + str(self.round))
+        elif self.blue_resigned:
+            print("RED WINS BY RESIGNATION at round " + str(self.round))
+        elif self.r == 0:
             print("BLUE WINS BY DESTRUCTION at round " + str(self.round))
         elif self.b == 0:
             print("RED WINS BY DESTRUCTION at round " + str(self.round))
@@ -100,6 +109,9 @@ class Map:
                 print("RED WINS BY TIEBREAKER at round " + str(self.round))
             else:
                 print("BLUE WINS BY TIEBREAKER at round " + str(self.round))
+        for id in self.bots:
+            self.bots[id].kill()
+        self.bots = []
 
     # Return true if the game is done
     def run_one_round(self) -> bool:
@@ -124,14 +136,18 @@ class Map:
 
     # run() must be implemented for both bot modules
     def run_bot(self, id):
-        from bot_controller import BotController
+        #from bot_controller import BotController
+        
         if id not in self.bots:
+            print("ID =", id, "not found")
             return
+        #print("Test")
         bot = self.bots[id]
-        if bot.team.team_id == True:
-            self.red_mod.run(BotController(self,id))
-        else:
-            self.blue_mod.run(BotController(self,id))
+        bot.turn()
+        #if bot.team.team_id == True:
+        #    self.red_code.run(BotController(self,id))
+        #else:
+        #    self.blue_code.run(BotController(self,id))
         
 
 
@@ -140,8 +156,54 @@ class Map:
             return True
         if self.r == 0 or self.b == 0:
             return True
+        if self.red_resigned or self.blue_resigned:
+            return True
         return False
 
+    def create_methods(self, bc):
+        return {
+            'Direction': Direction,
+            'BotType': BotType,
+            'Team': Team,
+            'BotInfo': BotInfo,
+            'LocationInfo':LocationInfo,
+            'ResourceInfo':ResourceInfo,
+            'get_round_num': (bc.get_round_number, 1),
+            'get_map_size' : (bc.get_map_size, 1),
+            'get_id' : (bc.get_id, 1),
+            'get_team' : (bc.get_team, 1),
+            'get_location' : (bc.get_location, 1),
+            'get_hp' : (bc.get_hp, 1),
+            'get_type' : (bc.get_type, 1),
+            'get_team_resources' : (bc.get_team_resources, 1),
+            'is_on_map' : (bc.is_location_on_map, 5),
+            'can_sense_location' : (bc.can_sense_location, 5),
+            'sense_location' : (bc.sense_location, 10),
+            'is_action_ready' : (bc.is_action_ready, 2),
+            'is_movement_ready' : (bc.is_movement_ready, 2),
+            'can_sense_bot_at_location' : (bc.can_sense_bot_at_location, 5),
+            'sense_bot_at_location' : (bc.sense_bot_at_location, 15),
+            'sense_bots_in_range' : (bc.sense_bots_in_range, 100),
+            'can_attack' : (bc.can_attack, 5),
+            'attack' : (bc.attack, 10),
+            'can_move' : (bc.can_move, 5),
+            'move' : (bc.move, 10),
+            'can_take_resources' : (bc.can_take_resources, 5),
+            'take_resources' : (bc.take_resources, 10),
+            'can_build_bot' : (bc.can_build_bot, 10),
+            'build_bot' : (bc.build_bot, 20),
+            'can_read_comms' : (bc.can_read_comms, 5),
+            'read_comms' : (bc.read_comms, 20),
+            'can_write_comms' : (bc.can_write_comms, 5),
+            'write_comms' : (bc.write_comms, 100),
+            'get_resources' : (bc.get_resources, 100),
+            'set_indicator_string' : (bc.set_indicator_string, 0),
+            'disintegrate' : (bc.disintegrate, 0),
+            'resign' : (bc.resign, 0)
+        }
+    
+    def get_round_number(self):
+        return self.round
 
     def is_on_map(self, location : Location) -> bool:
         return location.x >= 0 and location.y >= 0 and location.x < self.map_size[1] and location.y < self.map_size[0]
@@ -166,10 +228,16 @@ class Map:
         return LocationInfo(sense_loc, self.resource_map[sense_loc.y][sense_loc.x], self.terrain_map[sense_loc.y][sense_loc.x])
 
     def spawn_bot(self, location : Location, bot_type : BotType, team : Team):
+        from bot_controller import BotController
         if not self.is_on_map(location):
             print(location.x, location.y, "Not on map")
             return
         new_bot = Bot(location, bot_type, team)
+        bc = BotController(self, new_bot)
+        if team.team_id == True:
+            new_bot.start(self.red_code,self.create_methods(bc))
+        else:
+            new_bot.start(self.blue_code, self.create_methods(bc))
         if bot_type == BotType("Base"):
             if team.team_id == True:
                 self.r += 1
@@ -203,15 +271,17 @@ class Map:
 
     def despawn_bot(self, bot_id : int):
         if bot_id not in self.bots:
+            print("Could not despawn", bot_id)
             return
         location = self.bots[bot_id].loc
         self.bot_map[location.y][location.x] = 0
         self.bot_order[self.bot_order.index(bot_id)] = -1
-        if self.bots[bot_id].get_type() == BotType("Base"):
+        if self.bots[bot_id].type == BotType("Base"):
             if self.bots[bot_id].team.team_id == True:
                 self.r -= 1
             else:
                 self.b -= 1
+        self.bots[bot_id].kill()
         del self.bots[bot_id]
 
     # TODO: Add constant
@@ -357,3 +427,12 @@ class Map:
             if r > 0:
                 resources.append(ResourceInfo(loc, r))
         return resources
+    
+    def disintegrate(self, id : int):
+        self.despawn_bot(id)
+
+    def resign(self, team : Team):
+        if team.team_id:
+            self.red_resigned = True
+        else:
+            self.blue_resigned = True

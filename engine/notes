@@ -14,3 +14,6 @@ MAP_HEIGHT MAP_WIDTH
     List of positions for the red starting bots. Symmetry can be used to find the blue bots.
     x y
 )
+
+TODO:
+Look at Battlecode's python engine and start implementing bytecode counting and restricted methods

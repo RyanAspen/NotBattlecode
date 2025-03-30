@@ -37,7 +37,7 @@ class ReplayClient:
                     for j in range(num_bots):
                         # Read 
                         bot_s = lines[i+j].strip().split(",")
-                        bot_info = int(bot_s[0]), int(bot_s[1]), int(bot_s[2]), bot_s[3], int(bot_s[4]), True if bot_s[5] == "True" else False
+                        bot_info = int(bot_s[0]), int(bot_s[1]), int(bot_s[2]), bot_s[3], int(bot_s[4]), True if bot_s[5] == "True" else False, int(bot_s[6]), int(bot_s[7]), int(bot_s[8]), bot_s[9]
                         bot_round.append(bot_info)
 
                     self.bots[r] = bot_round
@@ -202,6 +202,21 @@ class ReplayClient:
         self.bot_info_hp_label = Label(self.bot_info_frame, textvariable=self.bot_info_hp)
         self.bot_info_hp_label.pack()
 
+        self.bot_info_action_cooldown = StringVar()
+        self.bot_info_action_cooldown_label = Label(self.bot_info_frame, textvariable=self.bot_info_action_cooldown)
+        self.bot_info_action_cooldown_label.pack()
+
+        self.bot_info_move_cooldown = StringVar()
+        self.bot_info_move_cooldown_label = Label(self.bot_info_frame, textvariable=self.bot_info_move_cooldown)
+        self.bot_info_move_cooldown_label.pack()
+
+        self.bot_info_bytecode = StringVar()
+        self.bot_info_bytecode_label = Label(self.bot_info_frame, textvariable=self.bot_info_bytecode)
+        self.bot_info_bytecode_label.pack()
+
+        self.bot_info_str = StringVar()
+        self.bot_info_str_label = Label(self.bot_info_frame, textvariable=self.bot_info_str)
+        self.bot_info_str_label.pack()
 
 
 
@@ -301,6 +316,10 @@ class ReplayClient:
                 self.bot_info_loc.set("Location = (" + str(bot[1]) + ", " + str(bot[2]) + ")")
                 self.bot_info_type.set("Type = " + bot[3])
                 self.bot_info_hp.set("HP = " + str(bot[4]))
+                self.bot_info_action_cooldown.set("Action Cooldown = " + str(bot[6]))
+                self.bot_info_move_cooldown.set("Move Cooldown = " + str(bot[7]))
+                self.bot_info_bytecode.set("Bytecode used = " + str(bot[8]))
+                self.bot_info_str.set(bot[9])
         elif self.tile_info_display_x is not None and self.tile_info_display_y is not None:
             tile = self.get_tile_info(self.tile_info_display_x, self.tile_info_display_y)
             self.tile_to_highlight_x = tile[0]

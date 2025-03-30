@@ -1,7 +1,6 @@
-from bot_controller import BotController
-from utility import Direction, BotType
 import random
 
+from stubs import *
 
 dirs = [
     Direction.NORTH,
@@ -14,20 +13,20 @@ dirs = [
     Direction.NORTHWEST
 ]
 
-def run(bc : BotController):
+def turn():
 
-    if bc.get_type() == BotType("Base"):
+    if get_type() == BotType("Base"):
         for dir in dirs:
-            if bc.can_build_bot(bc.get_location().add(dir), BotType("Basic")):
-                bc.build_bot(bc.get_location().add(dir), BotType("Basic"))
+            if can_build_bot(get_location().add(dir), BotType("Basic")):
+                build_bot(get_location().add(dir), BotType("Basic"))
                 break
 
     is_base = False
     min_hp = 9999
     attack_loc = None
-    bots = bc.sense_bots_in_range(bc.get_team().get_opponent())
+    bots = sense_bots_in_range(get_team().get_opponent())
     for bot in bots:
-        if bc.can_attack(bot.loc):
+        if can_attack(bot.loc):
             hp = bot.get_hp()
             if is_base and bot.get_type() != BotType("Base"):
                 continue
@@ -40,9 +39,9 @@ def run(bc : BotController):
                 attack_loc = bot.get_location()
 
     if attack_loc is not None:
-        bc.attack(attack_loc)
+        attack(attack_loc)
 
-    if bc.get_type() == BotType("Basic"):
+    if get_type() == BotType("Basic"):
         
         #closest_loc = None
         #closest_dist = 99999
@@ -60,29 +59,29 @@ def run(bc : BotController):
         #else:
         closest_loc = None
         closest_dist = 99999
-        for r in bc.get_resources():
-            dist = r.get_location().distance_squared_to(bc.get_location())
+        for r in get_resources():
+            dist = r.get_location().distance_squared_to(get_location())
             if dist < closest_dist:
                 closest_dist = dist
                 closest_loc = r.get_location()
-        if closest_loc is not None and closest_loc == bc.get_location():
+        if closest_loc is not None and closest_loc == get_location():
             pass
-        elif closest_loc is not None and bc.can_move(bc.get_location().direction_to(closest_loc)):
+        elif closest_loc is not None and can_move(get_location().direction_to(closest_loc)):
             #print("Moving towards Resource at ", closest_loc)
-            bc.move(bc.get_location().direction_to(closest_loc))
+            move(get_location().direction_to(closest_loc))
         else:
             #print("Moving randomly")
             d = dirs.copy()
             random.shuffle(d)
             for dir in d:
-                if bc.can_move(dir):
-                    bc.move(dir)
-        if bc.can_take_resources(bc.get_location()):
-            bc.take_resources(bc.get_location())
+                if can_move(dir):
+                    move(dir)
+        if can_take_resources(get_location()):
+            take_resources(get_location())
         else:
             for dir in dirs:
-                if bc.can_take_resources(bc.get_location().add(dir)):
-                    bc.take_resources(bc.get_location().add(dir))
+                if can_take_resources(get_location().add(dir)):
+                    take_resources(get_location().add(dir))
                     break
         
         

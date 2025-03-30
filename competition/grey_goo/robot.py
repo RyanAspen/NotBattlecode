@@ -1,7 +1,6 @@
-from bot_controller import BotController
-from utility import Direction, BotType
 import random
 
+from stubs import *
 
 dirs = [
     Direction.NORTH,
@@ -14,26 +13,39 @@ dirs = [
     Direction.NORTHWEST
 ]
 
-def run(bc : BotController):
+def turn():
 
+    #set_indicator_string("Hello World!")
     for dir in dirs:
-        if bc.can_build_bot(bc.get_location().add(dir), BotType("Basic")):
-            bc.build_bot(bc.get_location().add(dir), BotType("Basic"))
+        if can_build_bot(get_location().add(dir), BotType("Basic")):
+            build_bot(get_location().add(dir), BotType("Basic"))
+            set_indicator_string("Built bot at " + str(dir))
             break
 
-    bots = bc.sense_bots_in_range(bc.get_team().get_opponent())
+    set_indicator_string("TEST")
+    bots = sense_bots_in_range(get_team().get_opponent())
+    set_indicator_string(str(len(bots)))
     for bot in bots:
-        if bc.can_attack(bot.loc):
-            bc.attack(bot.loc)
+        if can_attack(bot.loc):
+            attack(bot.loc)
+            set_indicator_string("Attacking")
             break
         
     for dir in dirs:
-        if bc.can_take_resources(bc.get_location().add(dir)):
-            bc.take_resources(bc.get_location().add(dir))
+        if can_take_resources(get_location().add(dir)):
+            take_resources(get_location().add(dir))
+            set_indicator_string("Taking resources at " + str(dir))
             break
         
     dir = random.choice(dirs)
-    if bc.can_move(dir):
-        bc.move(dir)
+
+
+    #set_indicator_string(str(can_move(dir)))
+    if can_move(dir):
+        set_indicator_string("Moving to " + str(dir))
+        move(dir)
+    else:
+        set_indicator_string("Cannot move to " + str(dir))
+
     
     

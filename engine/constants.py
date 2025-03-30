@@ -11,3 +11,6 @@ MOVE_COOLDOWN = {"Base" : -1, "Basic" : 20}
 CAN_MOVE = {"Base" : False, "Basic" : True}
 CAN_BUILD = {"Base" : True, "Basic" : False}
 CAN_GATHER = {"Base" : False, "Basic" : True}
+PASSIVE_INCOME = 1
+NUM_COMM_INTS = 64
+BYTECODE_LIMIT = 10000

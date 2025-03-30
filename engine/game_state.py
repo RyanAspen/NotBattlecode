@@ -1,5 +1,3 @@
-import numpy as np
-
 class RoundData:
 
     def __init__(self, bots, terrain_map, resource_map):
