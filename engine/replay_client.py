@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter.filedialog import askopenfile
+
 import numpy as np
 
 from utility import BotType
@@ -22,6 +23,7 @@ class ReplayClient:
                 # From here, we swap between resource list and a list of bot info
                 self.resources = {}
                 self.bots = {}
+                self.attacks = {}
                 i = 2
                 r = 1
                 n = len(lines)
@@ -42,7 +44,16 @@ class ReplayClient:
 
                     self.bots[r] = bot_round
                     i += num_bots
-                    
+
+                    num_attacks = int(lines[i])
+                    i += 1
+                    attack_round = []
+                    for j in range(num_attacks):
+                        attack_s = lines[i+j].strip().split(",")
+                        attack_info = int(attack_s[0]),  int(attack_s[1]), int(attack_s[2]), int(attack_s[3])
+                        attack_round.append(attack_info)
+                    self.attacks[r] = attack_round
+                    i += num_attacks
                     r += 1
                 self.total_rounds = r - 1
 
@@ -65,6 +76,7 @@ class ReplayClient:
                 self.base = self.canvas.create_rectangle(self.x_start, self.y_start, self.x_end, self.y_end, fill='white')
                 self.resource_graphics = []
                 self.bot_graphics = []
+                self.attack_graphics = []
 
                 """
                 Now, draw terrain, since that doesn't change with round
@@ -140,6 +152,7 @@ class ReplayClient:
         self.paused = True
         self.resources = {}
         self.bots = {}
+        self.attacks = {}
         self.map_size = None
         self.terrain_map = None
         self.canvas = Canvas(self.root, bg="black",height=CLIENT_SIZE[0],width=CLIENT_SIZE[1]-EDITOR_TAB_SIZE[1])
@@ -254,7 +267,8 @@ class ReplayClient:
         self.y_end = None
         self.base = None
         self.resource_graphics = []
-        self.bot_graphics = []        
+        self.bot_graphics = []      
+        self.attack_graphics = []  
 
     def get_real_coords(self,x,y):
         real_x = self.x_start + x*self.scale
@@ -440,6 +454,24 @@ class ReplayClient:
                 else:
                     b_g = self.canvas.create_rectangle(r_start_x, r_start_y, r_start_x+size,r_start_y+size,fill='blue')
             self.bot_graphics.append(b_g)
+
+        """
+        An attack is rendered as a orange arrow pointing towards the defender from the attacker
+        """
+        for g in self.attack_graphics:
+            self.canvas.delete(g)
+        self.attack_graphics = []
+        attacks = self.attacks[self.round]
+        for attack in attacks:
+            a_x, a_y, d_x, d_y = attack
+            a_real_x,a_real_y = self.get_real_coords(a_x,a_y)
+            d_real_x,d_real_y = self.get_real_coords(d_x,d_y)
+            a_real_x += self.scale / 2
+            a_real_y += self.scale / 2
+            d_real_x += self.scale / 2
+            d_real_y += self.scale / 2
+            a_g = self.canvas.create_line(a_real_x, a_real_y, d_real_x, d_real_y, arrow=LAST, width=2,fill='orange')
+            self.attack_graphics.append(a_g)
 
         
 

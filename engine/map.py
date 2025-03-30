@@ -30,9 +30,11 @@ class Map:
         self.red_resources = 0
         self.blue_resources = 0
         self.red_resigned = False
+        self.attacks = []
         self.blue_resigned = False
         self.red_comms = np.zeros(NUM_COMM_INTS, dtype=np.uint16)
         self.blue_comms = np.zeros(NUM_COMM_INTS, dtype=np.uint16)
+        self.round_data = None
 
         with open("maps\\" + map_name + ".map", "r") as f:
             lines = f.readlines()
@@ -117,37 +119,31 @@ class Map:
     def run_one_round(self) -> bool:
         self.red_resources += PASSIVE_INCOME
         self.blue_resources += PASSIVE_INCOME
-        round_data = RoundData(self.bots, self.terrain_map, self.resource_map)
-        with open(self.replay_name_file, "a") as f:
-            round_data.add_to_file(f)
+        self.round_data = RoundData(self.bots, self.terrain_map, self.resource_map)
+        
         i = 0
         n = len(self.bot_order)
         while i < n:
             if self.bot_order[i] > -1:
                 self.run_bot(self.bot_order[i])
             i += 1
+        with open(self.replay_name_file, "a") as f:
+            self.round_data.add_to_file(f)
         self.bot_order = [b for b in self.bot_order if b > -1]      
-
+        self.round_data = None
         #print(self.round, self.r, self.b)  
         self.round += 1
         #print(self.bot_order)
         
         return self.is_game_done()        
 
-    # run() must be implemented for both bot modules
+    # turn() must be implemented for both bot modules
     def run_bot(self, id):
-        #from bot_controller import BotController
-        
         if id not in self.bots:
             print("ID =", id, "not found")
             return
-        #print("Test")
         bot = self.bots[id]
         bot.turn()
-        #if bot.team.team_id == True:
-        #    self.red_code.run(BotController(self,id))
-        #else:
-        #    self.blue_code.run(BotController(self,id))
         
 
 
@@ -314,6 +310,11 @@ class Map:
         if not self.can_attack(curr_loc, attack_loc, type):
             return False
         id = self.bot_map[attack_loc.y][attack_loc.x] 
+
+        # TODO: Record attack animation here
+        if self.round_data is not None:
+            self.round_data.add_attack(curr_loc, attack_loc)
+
         if id > 0:
             target = self.bots[id]
             target.hp -= type.get_attack_strength()
