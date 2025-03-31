@@ -232,6 +232,7 @@ class RobotRunner:
             try:
                 exec(self.locals['turn'].__code__, self.globals, self.locals)
             except Exception as e:
+                print(e)
                 if not isinstance(e, GameFinishedException):
                     self.error_method(traceback.format_exc(limit=5))
         else:

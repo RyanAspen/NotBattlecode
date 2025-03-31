@@ -32,8 +32,8 @@ class Map:
         self.red_resigned = False
         self.attacks = []
         self.blue_resigned = False
-        self.red_comms = np.zeros(NUM_COMM_INTS, dtype=np.uint16)
-        self.blue_comms = np.zeros(NUM_COMM_INTS, dtype=np.uint16)
+        self.red_comms = np.zeros(NUM_COMM_INTS, dtype=int)
+        self.blue_comms = np.zeros(NUM_COMM_INTS, dtype=int)
         self.round_data = None
 
         with open("maps\\" + map_name + ".map", "r") as f:
@@ -162,6 +162,7 @@ class Map:
             'BotType': BotType,
             'Team': Team,
             'BotInfo': BotInfo,
+            'Location': Location,
             'LocationInfo':LocationInfo,
             'ResourceInfo':ResourceInfo,
             'get_round_num': (bc.get_round_number, 1),
@@ -281,15 +282,15 @@ class Map:
         del self.bots[bot_id]
 
     # TODO: Add constant
-    def can_sense_bot_at_location(self, curr_loc : Location, sense_loc : Location) -> bool:
-        if curr_loc.distance_squared_to(sense_loc) > 10:
+    def can_sense_bot_at_location(self, curr_loc : Location, sense_loc : Location, botType : BotType) -> bool:
+        if curr_loc.distance_squared_to(sense_loc) > botType.get_vision_range():
             return False
         if not self.is_on_map(sense_loc):
             return False
         return True
     
-    def sense_bot_at_location(self, curr_loc : Location, sense_loc : Location) -> BotInfo:
-        if not self.can_sense_bot_at_location(curr_loc, sense_loc):
+    def sense_bot_at_location(self, curr_loc : Location, sense_loc : Location, botType : BotType) -> BotInfo:
+        if not self.can_sense_bot_at_location(curr_loc, sense_loc, botType):
             return None
         id = self.bot_map[sense_loc.y][sense_loc.x]
         if id == 0:

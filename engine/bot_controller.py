@@ -43,10 +43,10 @@ class BotController:
         return self.map.sense_location(loc)
 
     def can_sense_bot_at_location(self, loc : Location) -> bool:
-        return self.map.can_sense_bot_at_location(loc, self.bot.type)
+        return self.map.can_sense_bot_at_location(self.bot.loc, loc, self.bot.type)
 
     def sense_bot_at_location(self, loc : Location) -> BotInfo:
-        return self.map.sense_bot_at_location(loc, self.bot.type)
+        return self.map.sense_bot_at_location(self.bot.loc, loc, self.bot.type)
     
     def sense_bots_in_range(self, team : Team, r : int = -1) -> list[BotInfo]:
         return self.map.sense_bots(self.bot.loc, self.bot.id,self.bot.type, team, r)
@@ -95,10 +95,10 @@ class BotController:
         return self.map.can_read_comms(i)
 
     def read_comms(self, i : int) -> int:
-        return self.read_comms(i)
+        return self.map.read_comms(i,self.bot.team)
 
     def can_write_comms(self, i : int, val : int) -> bool:
-        return self.can_write_comms(i, val)
+        return self.map.can_write_comms(i, val)
 
     def write_comms(self, i : int, val : int):
         self.map.write_comms(i, val, self.bot.team)

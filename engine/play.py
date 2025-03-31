@@ -26,12 +26,12 @@ def run_game(args: RunGameArgs):
     
 
 args = RunGameArgs()
-args.player1_dir = "competition/nothing"
+args.player1_dir = "competition/base_finder"
 args.player2_dir = "competition/smarter_grey_goo"
-args.player1_name = "NOTHING"
+args.player1_name = "Base Finder"
 args.player2_name = "BETTER GREY GOO"
 args.map_dir = "maps"
-args.map_names = "smiles,test3"
+args.map_names = "smiles"
 args.out_dir = "replays"
 args.show_indicators = False
 args.instrument = True

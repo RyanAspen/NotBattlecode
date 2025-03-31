@@ -117,15 +117,15 @@ def attack(location : Location):
     """
     pass
 
-def can_move(location : Location) -> bool:
+def can_move(dir : Direction) -> bool:
     """
-    Returns true if the bot can move to the given location, or false otherwise.
+    Returns true if the bot can move in the given direction, or false otherwise.
     """
     pass
 
-def move(location : Location):
+def move(dir : Direction):
     """
-    Move to the given location if possible
+    Move in the given direction if possible
     """
     pass
 
