@@ -26,9 +26,9 @@ def run_game(args: RunGameArgs):
     
 
 args = RunGameArgs()
-args.player1_dir = "competition/base_finder"
+args.player1_dir = "competition/disintegrate_bot"
 args.player2_dir = "competition/smarter_grey_goo"
-args.player1_name = "Base Finder"
+args.player1_name = "Resign Bot"
 args.player2_name = "BETTER GREY GOO"
 args.map_dir = "maps"
 args.map_names = "smiles"

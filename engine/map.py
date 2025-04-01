@@ -144,6 +144,8 @@ class Map:
             return
         bot = self.bots[id]
         bot.turn()
+        if bot.disintegrated:
+            self.despawn_bot(id)
         
 
 
@@ -429,9 +431,6 @@ class Map:
             if r > 0:
                 resources.append(ResourceInfo(loc, r))
         return resources
-    
-    def disintegrate(self, id : int):
-        self.despawn_bot(id)
 
     def resign(self, team : Team):
         if team.team_id:

@@ -113,7 +113,7 @@ class BotController:
         self.bot.indicator_string = s
 
     def disintegrate(self):
-        return self.map.disintegrate(self.bot.id)
+        self.bot.disintegrated = True
     
     def resign(self):
         return self.map.resign(self.bot.team)

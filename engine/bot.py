@@ -17,6 +17,7 @@ class Bot:
 
         self.logs = []
         self.runner = None
+        self.disintegrated = False
 
     def __str__(self):
         s = str(self.id) + ","
