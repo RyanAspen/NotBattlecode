@@ -1,3 +1,4 @@
+from math import sqrt
 from tkinter import *
 from tkinter.filedialog import askopenfile
 
@@ -257,7 +258,8 @@ class ReplayClient:
         self.tile_to_highlight_x = None
         self.tile_to_highlight_y = None
         self.highlight = None
-
+        self.attack_range_circle = None
+        self.vision_range_circle = None
 
 
         self.scale = None
@@ -392,6 +394,22 @@ class ReplayClient:
             self.highlight.append(self.canvas.create_line(h_x, h_y+self.scale, h_x+self.scale, h_y+self.scale, fill='orange',width=2))
             self.highlight.append(self.canvas.create_line(h_x, h_y, h_x, h_y+self.scale, fill='orange',width=2))
             self.highlight.append(self.canvas.create_line(h_x+self.scale, h_y, h_x+self.scale, h_y+self.scale, fill='orange',width=2))
+
+        if self.attack_range_circle is not None:
+            self.canvas.delete(self.attack_range_circle)
+        if self.vision_range_circle is not None:
+            self.canvas.delete(self.vision_range_circle)
+        if self.bot_info_display_id is not None:
+            bot = self.get_bot_info_for_id(self.bot_info_display_id)
+            x,y = self.get_real_coords(bot[1],bot[2])
+            x += self.scale*0.5
+            y += self.scale*0.5
+            t = BotType(bot[3])
+            attack_r = sqrt(t.get_attack_range())*self.scale
+            vision_r = sqrt(t.get_vision_range())*self.scale
+            self.attack_range_circle = self.canvas.create_oval(x-attack_r,y-attack_r,x+attack_r,y+attack_r, outline="orange", width=5)
+            self.vision_range_circle = self.canvas.create_oval(x-vision_r,y-vision_r,x+vision_r,y+vision_r, outline="green", width=5)
+
 
         if self.round == self.prev_round:
             return
